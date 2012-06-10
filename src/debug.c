@@ -28,9 +28,6 @@ void vNum2String( char *s, uint8_t *pPos, uint32_t u32Number, uint8_t u8Base);
 xQueueHandle xDebugQueue;
 
 extern xTaskHandle hDebugTask;
-//extern xTaskHandle hTimeTask;
-//extern xTaskHandle hLCDTask;
-
 
 // ============================================================================
 void vDebugInitQueue( void ) {

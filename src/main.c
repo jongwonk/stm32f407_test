@@ -38,19 +38,23 @@
 #include "eobd.h"
 
 // Task priorities: Higher numbers are higher priority.
-#define mainTIME_TASK_PRIORITY      ( tskIDLE_PRIORITY + 3 )
-#define mainMEMS_TASK_PRIORITY      ( tskIDLE_PRIORITY + 2 )
+#define mainTIME_TASK_PRIORITY      ( tskIDLE_PRIORITY + 10 )
+#define mainMEMS_TASK_PRIORITY      ( tskIDLE_PRIORITY + 5 )
 #define mainDEBUG_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1 )
 #define mainINTEGER_TASK_PRIORITY   ( tskIDLE_PRIORITY )
+#define mainEOBD_TASK_PRIORITY      ( tskIDLE_PRIORITY + 3)
 
 xTaskHandle hTimeTask;
 xTaskHandle hMemsTask;
 xTaskHandle hDebugTask;
+xTaskHandle hEOBDTask;
+
 
 portTASK_FUNCTION_PROTO( vTimeTask, pvParameters );
 portTASK_FUNCTION_PROTO( vMemsTask, pvParameters );
 portTASK_FUNCTION_PROTO( vDebugTask, pvParameters );
 portTASK_FUNCTION_PROTO( vEOBDTask, pvParameters );
+
 
 uint64_t u64Ticks=0;        // Counts OS ticks (default = 1000Hz).
 uint64_t u64IdleTicks=0;    // Value of u64IdleTicksCnt is copied once per sec.
@@ -73,6 +77,9 @@ int main( void ) {
             NULL, mainMEMS_TASK_PRIORITY, &hMemsTask );
     xTaskCreate( vDebugTask, (signed char *) "DEBUG", configMINIMAL_STACK_SIZE,
             NULL, mainDEBUG_TASK_PRIORITY, &hDebugTask );
+
+    xTaskCreate( vEOBDTask, (signed char *) "EOBD", configMINIMAL_STACK_SIZE,
+            NULL, mainEOBD_TASK_PRIORITY, &hEOBDTask );
 
 
     vTaskStartScheduler(); // This should never return.

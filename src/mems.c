@@ -24,9 +24,6 @@ enum accelAxis { xAxis, na1, yAxis, na2, zAxis, na3 };
 #define	BLU_LED	0x08
 #define MEMS_MULT	4
 
-
-//extern portTASK_FUNCTION( vMemsTask, pvParameters );
-
 // ----------------------------------------------------------------------------
 portTASK_FUNCTION( vMemsTask, pvParameters ) {
 

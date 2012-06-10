@@ -18,7 +18,24 @@
 
 #include "eobd.h"
 
-CanTxMsg TxMessage;
+#define mainEOBDPRIM_TASK_PRIORITY  ( tskIDLE_PRIORITY + 3)
+#define QLENGTH 4 // queue length
+
+typedef struct EOBDMessage
+{
+	portCHAR uMsgID;
+	unsigned short uLength;
+	portCHAR Data[256];
+}EOBDMSG;
+
+xQueueHandle xEOBDQueueHandleToPrim;
+xQueueHandle xEOBDQueueHandle;
+
+xTaskHandle hEOBDPrimitiveTask;
+
+portBASE_TYPE SendRcvd(EOBDMSG *pMsgA, EOBDMSG *pMsgB, portTickType timeout);
+
+portTASK_FUNCTION_PROTO( vEOBDPrimitiveTask, pvParameters );
 
 void EOBD_GPIO_Configure(void)
 {
@@ -73,7 +90,7 @@ void EOBD_CAN_Configure(int baudrate)
 	CAN_Init(CAN1,&CAN_InitStructure);
 }
 
-void EOBD_Configure(void)
+void EOBD_Primitive_Configure(void)
 {
 	EOBD_GPIO_Configure();
 	EOBD_NVIC_Configure();
@@ -83,15 +100,65 @@ void EOBD_Configure(void)
 
 portTASK_FUNCTION( vEOBDTask, pvParameters )
 {
+	EOBDMSG RxMsg;
+	EOBDMSG TxMsg;
 
-	EOBD_Configure();
+	xEOBDQueueHandleToPrim = xQueueCreate(QLENGTH,sizeof(struct EOBSMessage *));
+	if(xEOBDQueueHandleToPrim == 0)
+	{
+		vDebugPrintf( "xEOBDQueueHandle == 0\r\n");
+	}
+
+    xTaskCreate( vEOBDPrimitiveTask, (signed char *) "EOBDPrim", configMINIMAL_STACK_SIZE,
+            NULL, mainEOBDPRIM_TASK_PRIORITY, &hEOBDPrimitiveTask );
 
 	vDebugString( "EOBD task started.\r\n");
 
 	while(1)
 	{
+		if(SendRcvd(&TxMsg, &RxMsg, (portTickType)50))
+		{
 
-
+		}
+		else {
+			vDebugString( "SendRcvd timeout\r\n");
+		}
 	}
 
 }
+
+portTASK_FUNCTION( vEOBDPrimitiveTask, pvParameters )
+{
+	EOBDMSG TxMsg;
+	EOBDMSG RxMsg;
+
+	EOBD_Primitive_Configure();
+
+	xEOBDQueueHandle = xQueueCreate(QLENGTH,sizeof(struct EOBSMessage *));
+	if(xEOBDQueueHandle == 0)
+	{
+		vDebugPrintf( "xEOBDQueueHandle == 0\r\n");
+	}
+
+
+	vDebugString( "EOBD primitive task started.\r\n");
+
+	while(1)
+	{
+		if(xQueueReceive(xEOBDQueueHandleToPrim,&TxMsg , portMAX_DELAY))
+		{
+
+
+			xQueueSend(xEOBDQueueHandle,&RxMsg, (portTickType)0);
+		}
+	}
+
+}
+
+portBASE_TYPE SendRcvd(EOBDMSG *pMsgA,EOBDMSG *pMsgB, portTickType timeout)
+{
+	xQueueSend(xEOBDQueueHandleToPrim,(void*)pMsgA, (portTickType)0);
+	return xQueueReceive(xEOBDQueueHandleToPrim,(void*)pMsgB, timeout);
+}
+
+

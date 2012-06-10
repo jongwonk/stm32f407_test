@@ -19,7 +19,7 @@
 #define CAN_500K 500000
 
 // configure functions
-void EOBD_Configure(void);
+void EOBD_Primitive_Configure(void);
 void EOBD_GPIO_Configure(void);
 void EOBD_NVIC_Configure(void);
 void EOBD_CAN_Configure(int baudrate);
