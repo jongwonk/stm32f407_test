@@ -21,6 +21,12 @@
 #define mainEOBDPRIM_TASK_PRIORITY  ( tskIDLE_PRIORITY + 3)
 #define QLENGTH 4 // queue length
 
+#define scale125KB	64
+#define scale250KB	32
+#define scale500KB	16
+#define scale1MB	8
+
+
 typedef struct EOBDMessage
 {
 	portCHAR uMsgID;
@@ -83,15 +89,18 @@ void EOBD_CAN_Configure(int baudrate)
 	CAN_StructInit(&CAN_InitStructure);
 
 	CAN_InitStructure.CAN_SJW		= CAN_SJW_1tq;
-	CAN_InitStructure.CAN_BS1		= CAN_BS1_10tq;
-	CAN_InitStructure.CAN_BS2		= CAN_BS2_7tq;
-	CAN_InitStructure.CAN_Prescaler = 2;
+	CAN_InitStructure.CAN_BS1		= CAN_BS1_7tq;
+	CAN_InitStructure.CAN_BS2		= CAN_BS2_6tq;
+	CAN_InitStructure.CAN_Prescaler = scale250KB;    // 1/((1/112M)*(bs1+bs2+1))*scale
 
 	CAN_Init(CAN1,&CAN_InitStructure);
 }
 
 void EOBD_Primitive_Configure(void)
 {
+	// enable clock for CAN2
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2 ,ENABLE);
+
 	EOBD_GPIO_Configure();
 	EOBD_NVIC_Configure();
 	EOBD_CAN_Configure(CAN_500K);
